@@ -194,7 +194,7 @@ jobs:
                   VERSION_SUBSTITUION: "main.version=0.0.0"
                   GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=${{ env.GO_MIN_VERSION }}"
                   GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=${{ env.GOLANGCI_LINT_VERSION }}"
-              shell: ${{ (runner.os == 'Windows' && 'powershell') || 'bash' }}
+              shell: bash
               run: |
                   # `go install` go-ci-tool
                   go install -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" github.com/ram-nad/go-monorepo/go-ci-tool@master
