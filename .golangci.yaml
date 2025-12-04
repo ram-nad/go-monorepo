@@ -1,0 +1,202 @@
+version: "2"
+
+run:
+    timeout: 0m
+    concurrency: 4
+    tests: true
+    issues-exit-code: 1
+    modules-download-mode: readonly
+    allow-parallel-runners: false
+
+severity:
+    default: error
+
+output:
+    sort-order:
+        - file
+        - severity
+        - linter
+    formats:
+        text:
+            print-linter-name: true
+            print-issued-lines: true
+            colors: true
+    show-stats: true
+
+issues:
+    max-issues-per-linter: 0
+    max-same-issues: 0
+    new: false
+    fix: false
+    uniq-by-line: true
+
+formatters:
+    enable:
+        - gofmt
+        - gofumpt
+        - goimports
+        - golines
+        - gci
+    exclusions:
+        generated: strict
+    settings:
+        gci:
+            custom-order: true
+            no-lex-order: false
+            sections:
+                - standard
+                - default
+        gofmt:
+            simplify: true
+        gofumpt:
+            extra-rules: false
+        golines:
+            max-len: 88
+            tab-len: 4
+            shorten-comments: false
+            reformat-tags: true
+            chain-split-dots: true
+
+linters:
+    default: none
+    exclusions:
+        generated: strict
+        warn-unused: true
+    enable:
+        - errcheck
+        - govet
+        - staticcheck
+        - ineffassign
+        - unused
+        - asciicheck
+        - cyclop
+        - decorder
+        - dupl
+        - errname
+        - exhaustive
+        - gocheckcompilerdirectives
+        - gochecknoglobals
+        - gochecknoinits
+        - gocognit
+        - godot
+        - gosec
+        - gocritic
+        - maintidx
+        - misspell
+        - mnd
+        - nolintlint
+        - recvcheck
+        - reassign
+        - revive
+        - whitespace
+        - testableexamples
+
+    settings:
+        errcheck:
+            check-type-assertions: true
+            check-blank: false
+            disable-default-exclusions: true
+
+        govet:
+            enable:
+                - reflectvaluecompare
+                - sortslice
+                - unusedwrite
+
+        staticcheck:
+            checks:
+                - all
+
+        unused:
+            field-writes-are-uses: true
+            post-statements-are-reads: false
+            exported-fields-are-used: true
+            parameters-are-used: true
+            local-variables-are-used: false
+            generated-is-used: true
+
+        cyclop:
+            max-complexity: 15
+
+        decorder:
+            dec-order:
+                - type
+                - const
+                - var
+                - func
+            ignore-underscore-vars: false
+            disable-dec-order-check: false
+
+        dupl:
+            threshold: 150
+
+        exhaustive:
+            check:
+                - switch
+                - map
+            explicit-exhaustive-switch: false
+            explicit-exhaustive-map: false
+            default-case-required: true
+            default-signifies-exhaustive: true
+            package-scope-only: false
+
+        gocognit:
+            min-complexity: 30
+
+        gocritic:
+            enable-all: false
+            disable-all: false
+
+        godot:
+            scope: all
+            period: false
+            capital: true
+
+        gosec:
+            severity: low
+            confidence: medium
+            config:
+                global:
+                    nosec: false
+                    show-ignored: true
+                    audit: true
+
+        maintidx:
+            under: 20
+
+        misspell:
+            locale: US
+            mode: default
+
+        mnd:
+            checks:
+                - argument
+                - return
+                - case
+                - condition
+                - assign
+                - operation
+            ignored-numbers:
+                - "0"
+                - "1"
+                - "0.0"
+
+        nolintlint:
+            allow-unused: false
+            require-explanation: true
+            require-specific: true
+
+        recvcheck:
+            disable-builtin: true
+
+        revive:
+            severity: error
+            confidence: 0.5
+
+        reassign:
+            patterns:
+                - ".*"
+
+        whitespace:
+            multi-if: false
+            multi-func: false

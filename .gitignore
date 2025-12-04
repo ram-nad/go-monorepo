@@ -1,0 +1,33 @@
+# Build outputs
+*.o
+*.a
+*.so
+*.exe
+*.out
+
+# Env file
+.env
+
+# Coverage Output
+coverage.out
+
+# Tests Output
+test.out.json
+
+# Editor files
+/.vscode
+/.idea
+/.zed
+
+# Build directory
+build
+
+# Debug files
+__debug*
+
+# Go Workspace file
+go.work
+
+# Go CI Tool
+/run-go-ci-tool
+/run-go-ci-tool.exe
