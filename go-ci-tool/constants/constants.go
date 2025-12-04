@@ -7,7 +7,10 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+//nolint:gochecknoglobals // Value for this is passed at build time
 var minGoVersion = ""
+
+//nolint:gochecknoglobals // Value for this is passed at build time
 var minGolangCILintVersion = ""
 
 func MinSupportedGoVersion() string {
