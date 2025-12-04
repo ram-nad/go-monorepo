@@ -88,7 +88,7 @@ jobs:
             - name: Install GolangCI-Lint
               shell: python -u {0}
               run: |
-                  # Donwload Pre-Built Binary for GolangCI-Lint
+                  # Download pre-built binary for GolangCI-Lint
 
                   import os
                   import platform
@@ -196,10 +196,10 @@ jobs:
                   GOLANG_CI_LINT_VERSION_SUBSTITUTION: "'github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=${{ env.GOLANGCI_LINT_VERSION }}'"
               run: |
                   # `go install` go-ci-tool
-                  go install github.com/ram-nad/go-monorepo/go-ci-tool@master -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION"
+                  go install -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" github.com/ram-nad/go-monorepo/go-ci-tool@master
 
             # Validate the setup
-            - name: Check All Tools Setup Correctly
+            - name: Check Tools
               run: go-ci-tool check-tools
 
             # Get changed files for pull request
@@ -248,7 +248,7 @@ jobs:
                   echo "::endgroup::"
 
             # Run Checks for Go Modules
-            - name: Check Modules
+            - name: Run CI
               shell: python -u {0}
               run: |
                   # CI
@@ -392,7 +392,7 @@ jobs:
                   exit(0 if allSuccess else 1)
 
             # Upload Test Artifacts
-            - name: Upload Test Artifacts
+            - name: Upload CI Artifacts
               uses: actions/upload-artifact@v4
               if: always()
               with:
