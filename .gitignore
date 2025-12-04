@@ -27,7 +27,3 @@ __debug*
 
 # Go Workspace file
 go.work
-
-# Go CI Tool
-/run-go-ci-tool
-/run-go-ci-tool.exe

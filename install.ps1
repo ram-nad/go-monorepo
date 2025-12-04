@@ -38,14 +38,14 @@ if ($golangciLintVersion -eq $GOLANGCI_LINT_VERSION) {
     Remove-Item -Path ($tmp.FullName + ".zip")
 
     $folderName = "golangci-lint-$GOLANGCI_LINT_VERSION-windows-$arch"
-    $golangciLintPath = Join-Path ([System.IO.Path]::GetTempPath()) $folderName
+    $golangCILintPath = Join-Path ([System.IO.Path]::GetTempPath()) $folderName
     $GOBIN_PATH_FULL = $GOBIN_PATH + "\"
 
     if (!(Test-Path -Path $GOBIN_PATH)) {
         New-Item -Path $GOBIN_PATH -Type Directory
     }
 
-    Move-Item -Path $golangciLintPath\golangci-lint.exe -Destination $GOBIN_PATH -Force
+    Move-Item -Path $golangCILintPath\golangci-lint.exe -Destination $GOBIN_PATH -Force
 }
 
 # Build the go-tool tool
@@ -55,4 +55,4 @@ $VERSION_SUBSTITUION = "'main.version=0.0.0'"
 $GO_MIN_VERSION_SUBSTITUTION = "'github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=$GO_MIN_VERSION'"
 $GOLANG_CI_LINT_VERSION_SUBSTITUTION = "'github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=$GOLANGCI_LINT_VERSION'"
 
-powershell -Command { $env:GOWORK="off"; go-ci-tool -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION -o ..\run-go-tool.exe }
+powershell -Command { $env:GOWORK="off"; go install -C go-ci-tool -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION . }

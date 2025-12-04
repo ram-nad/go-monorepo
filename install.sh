@@ -40,4 +40,4 @@ VERSION_SUBSTITUION="'main.version=0.0.0'"
 GO_MIN_VERSION_SUBSTITUTION="'github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=$GO_MIN_VERSION'"
 GOLANG_CI_LINT_VERSION_SUBSTITUTION="'github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=$GOLANGCI_LINT_VERSION'"
 
-GOWORK=off go build -C go-ci-tool -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" -o ../run-go-ci-tool
+GOWORK=off go install -C go-ci-tool -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" .
