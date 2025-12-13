@@ -73,6 +73,8 @@ jobs:
             # Setup GolangCI-Lint
             - name: Install GolangCI-Lint
               shell: python -u {0}
+              env:
+                  GOLANGCI_LINT_VERSION: ${{ inputs.golangci_lint_version }}
               run: |
                   # Download pre-built binary for GolangCI-Lint
 
