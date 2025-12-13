@@ -20,9 +20,7 @@ The CI step is optimised to execute fast and use minimal compute. To that effect
 
 ### Using the setup in your own GitHub repository
 
-1. Copy GitHub workflow file (`.github/workflows/ci.yml`) to your own repository
-2. Update the Minimum Go Version and Golang CI Lint Version in `ci.yml`
-3. You can either copy `.golangci.yaml`, or else create your own lint configuration file
+1. Use the `.github/workflows/go-ci.yml` workflow in your repository (Check [ci.yaml](.github/workflows/ci.yml)for example)
 
 ### Using the setup locally
 

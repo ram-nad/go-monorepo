@@ -1,9 +1,5 @@
 name: CI
 
-env:
-    GOLANGCI_LINT_VERSION: "2.7.0"
-    GO_MIN_VERSION: "1.25.5"
-
 on:
     workflow_dispatch:
         inputs:
@@ -33,3 +29,5 @@ jobs:
         uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
         with:
             os: ${{ (github.event_name != 'workflow_dispatch' && 'Linux') ||  github.event.inputs.os }}
+            min_go_version: "1.25.5"
+            golangci_lint_version: "2.7.0"

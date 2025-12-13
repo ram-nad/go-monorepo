@@ -5,6 +5,14 @@ on:
                 description: "OS (Linux / Windows / macOS)"
                 required: true
                 type: string
+            min_go_version:
+                description: "Minimum Go Version"
+                type: string
+                required: true
+            golangci_lint_version:
+                description: "GolangCI-Lint Version"
+                type: string
+                required: true
 
 jobs:
     ci:
@@ -59,7 +67,7 @@ jobs:
             - uses: actions/setup-go@v5
               name: Setup Go
               with:
-                  go-version: ${{ env.GO_MIN_VERSION }}
+                  go-version: ${{ inputs.min_go_version }}
                   cache: false # We are not using cache from this action as it does not restore cache on dependencies change at all
 
             # Setup GolangCI-Lint
@@ -206,8 +214,8 @@ jobs:
             - name: Install go-ci-tool
               env:
                   VERSION_SUBSTITUION: "main.version=1.0.0"
-                  GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=${{ env.GO_MIN_VERSION }}"
-                  GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=${{ env.GOLANGCI_LINT_VERSION }}"
+                  GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=${{ inputs.min_go_version }}"
+                  GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=${{ inputs.golangci_lint_version }}"
               shell: bash
               run: |
                   # `go install` go-ci-tool
