@@ -1,0 +1,422 @@
+on:
+    workflow_call:
+        inputs:
+            os:
+                description: "OS (Linux / Windows / macOS)"
+                required: true
+                type: string
+
+jobs:
+    ci:
+        runs-on: ${{ (inputs.os == 'Linux' && 'ubuntu-latest') || (inputs.os == 'Windows' && 'windows-latest') || (inputs.os == 'macOS' && 'macos-latest') || 'ubuntu-latest' }}
+        steps:
+            # Checkout
+            - uses: actions/checkout@v4
+              name: Checkout
+              with:
+                  fetch-depth: 1
+
+            # Restore (and later save) cache
+            # We cache Go Modules, Go Build Cache, and golangci-lint cache
+            - uses: actions/cache@v4
+              if: runner.os == 'Linux'
+              name: Restore Cache [Linux]
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/.cache/golangci-lint
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go
+              continue-on-error: true
+            - uses: actions/cache@v4
+              if: runner.os == 'macOS'
+              name: Restore Cache [macOS]
+              with:
+                  path: |
+                      ~/Library/Caches/go-build
+                      ~/Library/Caches/golangci-lint
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go
+              continue-on-error: true
+            - uses: actions/cache@v4
+              if: runner.os == 'Windows'
+              name: Restore Cache [Windows]
+              with:
+                  path: |
+                      ~\AppData\Local\go-build
+                      ~\AppData\Local\golangci-lint
+                      ~\go\pkg\mod
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go
+              continue-on-error: true
+
+            # Setup Go
+            - uses: actions/setup-go@v5
+              name: Setup Go
+              with:
+                  go-version: ${{ env.GO_MIN_VERSION }}
+                  cache: false # We are not using cache from this action as it does not restore cache on dependencies change at all
+
+            # Setup GolangCI-Lint
+            - name: Install GolangCI-Lint
+              shell: python -u {0}
+              run: |
+                  # Download pre-built binary for GolangCI-Lint
+
+                  import os
+                  import platform
+                  import shutil
+                  import subprocess
+                  import tarfile
+                  import zipfile
+                  from pathlib import Path
+                  from urllib.request import urlretrieve
+                  import re
+
+                  version = os.getenv("GOLANGCI_LINT_VERSION")
+                  runner_tool_cache = os.getenv("RUNNER_TOOL_CACHE")
+
+                  if runner_tool_cache is None:
+                      raise Exception("Expected RUNNER_TOOL_CACHE be defined")
+
+                  if version is None or (re.match("^[0-9]+[.][0-9]+[.][0-9]+$", version)) is None:
+                      raise Exception("Invalid GolangCI-Lint Version")
+
+                  go_path = (
+                      subprocess.run(["go", "env", "GOPATH"], capture_output=True, text=True, check=True)
+                      .stdout.removesuffix("\n")
+                      .removesuffix("\r")
+                  )
+                  go_bin_path = Path(go_path) / "bin"
+
+
+                  def get_asset_URL() -> tuple[str, str, str]:
+                      os_name = platform.system()
+
+                      if os_name == "Linux":
+                          platform_name = "linux"
+                          ext = "tar.gz"
+                      elif os_name == "Darwin":
+                          platform_name = "darwin"
+                          ext = "tar.gz"
+                      elif os_name == "Windows":
+                          platform_name = "windows"
+                          ext = "zip"
+
+                      machine = platform.machine()
+
+                      if (
+                          machine.lower() == "x86_64"
+                          or machine.lower() == "amd64"
+                          or machine.lower() == "x64"
+                      ):
+                          platform_arch = "amd64"
+                      elif (
+                          machine.lower() == "x86"
+                          or machine.lower() == "i386"
+                          or machine.lower() == "i686"
+                      ):
+                          platform_arch = "386"
+                      elif machine.lower() == "arm64" or machine.lower() == "aarch64":
+                          platform_arch = "arm64"
+
+                      try:
+                          return (
+                              f"https://github.com/golangci/golangci-lint/releases/download/v{version}/golangci-lint-{version}-{platform_name}-{platform_arch}.{ext}",
+                              platform_name,
+                              platform_arch
+                          )
+                      except NameError:
+                          raise Exception("Invalid Platform/Architecture")
+
+
+                  asset_url, platform_name, platform_arch = get_asset_URL()
+                  if platform_name == "windows":
+                      app_file = "golangci-lint.exe"
+                  else:
+                      app_file = "golangci-lint"
+
+                  complete_file = ".complete"
+
+                  runner_tool_cache_path = (Path(runner_tool_cache) / "golangci-lint" / version / platform_arch).resolve()
+                  complete_file_path = Path(str(runner_tool_cache_path)+ ".complete")
+
+                  if (runner_tool_cache_path / app_file).is_file() and complete_file_path.is_file():
+                      print(f"Found {app_file} in tool cache @ {runner_tool_cache_path}")
+                  else:
+                      print(f"Downloading GolangCI-Lint from {asset_url}")
+
+                      temp_downloaded_file, _ = urlretrieve(asset_url)
+                      temp_download_folder = Path(temp_downloaded_file).parent
+
+                      print(f"Downloaded {asset_url} to {temp_downloaded_file}")
+
+                      internal_folder_after_extract = (
+                          (asset_url.split("/"))[-1].removesuffix(".zip").removesuffix(".tar.gz")
+                      )
+
+                      temp_file_extract_path = temp_download_folder / (str(Path(temp_downloaded_file).name) + "-" + internal_folder_after_extract)
+                      temp_file_extract_path.mkdir(parents=True, exist_ok=False)
+
+                      if platform_name == "windows":
+                          with zipfile.ZipFile(temp_downloaded_file, "r") as zip_object:
+                              print(f"Extracting {temp_downloaded_file} (.zip) to {temp_file_extract_path}")
+                              zip_object.extractall(path=temp_file_extract_path)
+                      else:
+                          with tarfile.open(temp_downloaded_file, "r:gz") as tarfile_object:
+                              print(f"Extracting {temp_downloaded_file} (.tar.gz) to {temp_file_extract_path}")
+                              tarfile_object.extractall(path=temp_file_extract_path, filter="fully_trusted")
+
+                      extracted_file_path = temp_file_extract_path / internal_folder_after_extract / app_file
+                      print(f"Executable at: {extracted_file_path}")
+
+                      print(f"Removing temporary file {temp_downloaded_file}")
+                      os.remove(temp_downloaded_file)
+
+                      print(f"Adding to tool cache...")
+
+                      runner_tool_cache_path.mkdir(parents=True, exist_ok=True)
+                      if (runner_tool_cache_path/app_file).is_file():
+                          os.remove(runner_tool_cache_path / app_file)
+
+                      shutil.move(extracted_file_path, runner_tool_cache_path)
+                      print(f"Moved {extracted_file_path} to {runner_tool_cache_path}")
+                      complete_file_path.touch()
+                      print(f"Added GolangCI-Lint to tool cache")
+
+                      print(f"Removing temporary folder {temp_file_extract_path}")
+                      shutil.rmtree(temp_file_extract_path)
+
+                  if (go_bin_path / app_file).is_file():
+                      print(f"Removing the pre-existing {app_file} from {go_bin_path}")
+                      os.remove(go_bin_path / app_file)
+
+                  print(f"Creating symlink from {go_bin_path / app_file} to {runner_tool_cache_path / app_file}")
+                  (go_bin_path / app_file).symlink_to(runner_tool_cache_path / app_file)
+
+                  print(f"Successfully setup GolangCI-Lint version {version}")
+                  process_run = subprocess.run([app_file, "--version"], capture_output=False)
+
+            # Install go-ci-tool using `go install`
+            - name: Install go-ci-tool
+              env:
+                  VERSION_SUBSTITUION: "main.version=1.0.0"
+                  GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=${{ env.GO_MIN_VERSION }}"
+                  GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=${{ env.GOLANGCI_LINT_VERSION }}"
+              shell: bash
+              run: |
+                  # `go install` go-ci-tool
+                  go install -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" github.com/ram-nad/go-monorepo/go-ci-tool@v1.0.0
+
+            # Validate the setup
+            - name: Check Tools
+              run: go-ci-tool check-tools
+
+            # Get changed files for pull request
+            - name: Git Diff [PR]
+              if: github.event_name == 'pull_request'
+              shell: bash
+              run: |
+                  # Get Git Diff
+
+                  git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.event.pull_request.base.ref }}
+                  git --no-pager diff --no-color --name-only --output=diff.txt origin/${{ github.event.pull_request.base.ref }}..
+            # Get changed files for push (if ref existed previously)
+            - name: Git Diff [Push]
+              if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+              shell: bash
+              run: |
+                  # Get Git Diff
+
+                  git fetch --no-tags --prune --depth=1 origin ${{ github.event.before }}
+                  git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..
+
+            # Output Git Diff
+            - name: Output Git Diff [If Exists]
+              if: (github.event_name == 'pull_request') || (github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000')
+              shell: bash
+              run: |
+                  # Echo Git Diff
+
+                  echo "::group::Show Git Diff"
+                  cat diff.txt
+                  echo "::endgroup::"
+
+            # Process only changed modules for pull request and pushes with pre-existing commits
+            # Process all modules for workflow_dispatch and new ref pushes
+            - name: Get Modules to Check
+              env:
+                  NO_COLOR: "1"
+              run: |
+                  # List Modules
+
+                  go-ci-tool list-modules --diff diff.txt --skip-no-file-error >modules.txt
+
+            - name: Echo Modules
+              shell: bash
+              run: |
+                  # Echo Modules
+
+                  echo "::group::Changed Modules"
+                  cat modules.txt
+                  echo "::endgroup::"
+
+            # Run Checks for Go Modules
+            - name: Run CI
+              shell: python -u {0}
+              run: |
+                  # CI
+
+                  import subprocess
+                  import textwrap
+                  import os
+
+                  def RunCommand(module: str, arg: str) -> bool:
+                      p = subprocess.Popen(["go-ci-tool", "module", "-m", module, arg],
+                                      stdin=subprocess.DEVNULL,
+                                      stderr=subprocess.STDOUT
+                                      )
+                      return p.wait() == 0
+
+                  def CheckVersion(module: str) -> bool:
+                      return RunCommand(module, "--version")
+
+                  def CheckLocalReplace(module: str) -> bool:
+                      return RunCommand(module, "--check-local-replace")
+
+                  def Download(module: str) -> bool:
+                      return RunCommand(module, "--download")
+
+                  def ModIsTidy(module: str) -> bool:
+                      return RunCommand(module, "--is-tidy")
+
+                  def Lint(module: str) -> bool:
+                      return RunCommand(module, "--lint")
+
+                  def Test(module: str) -> bool:
+                      return RunCommand(module, "--test")
+
+                  def Build(module: str) -> bool:
+                      return RunCommand(module, "--build")
+
+                  def Run(module: str) -> dict:
+                      print("\n" + '{:=^60}'.format(f" Module: {module} "))
+                      print(f"::group::Check Go Version for {module}")
+                      checkVersion = CheckVersion(module)
+                      print(f"::endgroup::")
+
+                      print(f"::group::Check local replace directives in go.mod for {module}")
+                      checkLocalReplace = CheckLocalReplace(module)
+                      print(f"::endgroup::")
+
+                      if checkLocalReplace != True:
+                          return {
+                              "checkVersion": checkVersion,
+                              "checkLocalReplace": checkLocalReplace,
+                          }
+
+                      print(f"::group::Check go.mod is tidy for {module}")
+                      modIsTidy = ModIsTidy(module)
+                      print(f"::endgroup::")
+
+                      print(f"::group::Download dependencies for {module}")
+                      download = Download(module)
+                      print(f"::endgroup::")
+
+                      if download != True:
+                          return {
+                              "checkVersion": checkVersion,
+                              "checkLocalReplace": checkLocalReplace,
+                              "modIsTidy": modIsTidy,
+                              "download": download,
+                          }
+
+                      print(f"::group::Lint {module}")
+                      lint = Lint(module)
+                      print(f"::endgroup::")
+
+                      print(f"::group::Run Tests for {module}")
+                      test = Test(module)
+                      print(f"::endgroup::")
+
+                      if test != True:
+                          return {
+                              "checkVersion": checkVersion,
+                              "checkLocalReplace": checkLocalReplace,
+                              "download": download,
+                              "modIsTidy": modIsTidy,
+                              "lint": lint,
+                              "test": test,
+                          }
+
+                      print(f"::group::Check Build for {module}")
+                      build = Build(module)
+                      print(f"::endgroup::")
+
+                      return {
+                          "checkVersion": checkVersion,
+                          "checkLocalReplace": checkLocalReplace,
+                          "download": download,
+                          "modIsTidy": modIsTidy,
+                          "lint": lint,
+                          "test": test,
+                          "build": build
+                      }
+
+                  modules = []
+
+                  try:
+                      f = open("modules.txt")
+                  except:
+                      modules = subprocess.run(["./run-go-tool", "list-modules"], stdout=subprocess.PIPE).stdout.decode().splitlines()
+                  else:
+                      with f:
+                          modules = f.readlines()
+
+                  output = ""
+                  allSuccess = True
+
+                  for module in modules:
+                      module = module.strip()
+                      run = Run(module)
+                      success = bool(run.get("checkLocalReplace") and run.get("download") and run.get("modIsTidy") and run.get("lint") and run.get("build"))
+                      allSuccess = allSuccess and success
+                      moduleOutput = f'''
+                      <details>
+                      <summary><h3>{module} {':white_check_mark:' if success else ':x:'}</h3></summary>
+                      <strong>Go version {':white_check_mark:' if run.get("checkVersion") else ':warning:' if run.get("checkVersion") is None else ':x:'}</strong><br>
+                      <strong>No local replaces in go.mod {':white_check_mark:' if run.get("checkLocalReplace") else ':warning:' if run.get("checkLocalReplace") is None else ':x:'}</strong><br>
+                      <strong>go.mod is tidy {':white_check_mark:' if run.get("modIsTidy") else ':x:' if run.get("modIsTidy") is not None else ':warning:'}</strong><br>
+                      <strong>Download dependencies {':white_check_mark:' if run.get("download") else ':x:' if run.get("download") is not None else ':warning:'}</strong><br>
+                      <strong>Lint {':white_check_mark:' if run.get("lint") else ':x:' if run.get("lint") is not None else ':warning:'}</strong><br>
+                      <strong>Test {':white_check_mark:' if run.get("test") else ':x:' if run.get("test") is not None else ':warning:'}</strong><br>
+                      <strong>Build {':white_check_mark:' if run.get("build") else ':x:' if run.get("build") is not None else ':warning:'}</strong><br>
+                      </details>'''
+                      output += textwrap.dedent(moduleOutput)
+                      output += "\n"
+
+                  try:
+                      o = open(os.environ["GITHUB_STEP_SUMMARY"], 'a')
+                  except:
+                      print(output)
+                  else:
+                      with o:
+                          o.write(output)
+
+                  exit(0 if allSuccess else 1)
+
+            # Upload Test Artifacts
+            - name: Upload CI Artifacts
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: test-artifacts
+                  if-no-files-found: ignore
+                  path: |
+                      ./**/test.out.json
+                      ./**/coverage.out
