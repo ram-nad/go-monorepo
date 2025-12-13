@@ -300,7 +300,7 @@ func RunTests(
 		"test",
 		"-cover",
 		"-json",
-		"-covermode=atomic",
+		"-covermode=count",
 		"-coverpkg=./...",
 		"-coverprofile="+coverageOut,
 		AllModulesPath,
