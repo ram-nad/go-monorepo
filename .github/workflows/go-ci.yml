@@ -196,7 +196,8 @@ jobs:
 
                   git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.event.pull_request.base.ref }}
                   echo "GIT_DIFF_FILES<<EOF" >> "$GITHUB_ENV"
-                  echo "$(git --no-pager diff --no-color --name-only origin/${{ github.event.pull_request.base.ref }}..)" >> "$GITHUB_ENV"
+                  GIT_DIFF_FILES=$(git --no-pager diff --no-color --name-only origin/${{ github.event.pull_request.base.ref }}..)
+                  echo "$GIT_DIFF_FILES" >> "$GITHUB_ENV"
                   echo "EOF" >> "$GITHUB_ENV"
             # Get changed files for push (if ref existed previously)
             - name: Git Diff [Push]
@@ -207,7 +208,8 @@ jobs:
 
                   git fetch --no-tags --prune --depth=1 origin ${{ github.event.before }}
                   echo "GIT_DIFF_FILES<<EOF" >> "$GITHUB_ENV"
-                  echo "$(git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..)" >> "$GITHUB_ENV"
+                  GIT_DIFF_FILES=$(git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..)
+                  echo "$GIT_DIFF_FILES" >> "$GITHUB_ENV"
                   echo "EOF" >> "$GITHUB_ENV"
 
             # Get the list of Go Modules to check
@@ -299,10 +301,11 @@ jobs:
                       ~/.cache/go-build
                       ~/.cache/golangci-lint
                       ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}-${{ hashFiles('**/go.mod') }}
                   restore-keys: |
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go
               continue-on-error: true
             - uses: actions/cache@v4
@@ -313,10 +316,11 @@ jobs:
                       ~/Library/Caches/go-build
                       ~/Library/Caches/golangci-lint
                       ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}-${{ hashFiles('**/go.mod') }}
                   restore-keys: |
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go
               continue-on-error: true
             - uses: actions/cache@v4
@@ -327,10 +331,11 @@ jobs:
                       ~\AppData\Local\go-build
                       ~\AppData\Local\golangci-lint
                       ~\go\pkg\mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}-${{ hashFiles('**/go.mod') }}
                   restore-keys: |
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
-                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}-${{ hashFiles('**/go.mod') }}
+                      ${{ runner.os }}-go-${{ env.MODULES_TO_CHECK_HASH }}
+                      ${{ runner.os }}-go-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go
               continue-on-error: true
 
@@ -518,7 +523,7 @@ jobs:
               uses: actions/upload-artifact@v4
               if: always()
               with:
-                  name: test-artifacts
+                  name: ${{ runner.os }}-test-artifacts
                   if-no-files-found: ignore
                   path: |
                       ./**/test.out.json
