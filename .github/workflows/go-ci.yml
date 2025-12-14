@@ -195,9 +195,9 @@ jobs:
                   # Get Git Diff
 
                   git fetch --no-tags --prune --depth=1 origin +refs/heads/${{ github.event.pull_request.base.ref }}
-                  echo "GIT_DIFF_FILES<<EOF" >> $GITHUB_ENV
-                  echo "$(git --no-pager diff --no-color --name-only origin/${{ github.event.pull_request.base.ref }}..)" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  echo "GIT_DIFF_FILES<<EOF" >> "$GITHUB_ENV"
+                  echo "$(git --no-pager diff --no-color --name-only origin/${{ github.event.pull_request.base.ref }}..)" >> "$GITHUB_ENV"
+                  echo "EOF" >> "$GITHUB_ENV"
             # Get changed files for push (if ref existed previously)
             - name: Git Diff [Push]
               if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
@@ -206,9 +206,9 @@ jobs:
                   # Get Git Diff
 
                   git fetch --no-tags --prune --depth=1 origin ${{ github.event.before }}
-                  echo "GIT_DIFF_FILES<<EOF" >> $GITHUB_ENV
-                  echo "$(git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..)" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
+                  echo "GIT_DIFF_FILES<<EOF" >> "$GITHUB_ENV"
+                  echo "$(git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..)" >> "$GITHUB_ENV"
+                  echo "EOF" >> "$GITHUB_ENV"
 
             # Get the list of Go Modules to check
             - name: Get Modules to Check
@@ -267,8 +267,12 @@ jobs:
                       print("::endgroup::")
                       print()
 
+
+                  all_modules.sort()
                   modules_to_check.sort()
                   modules_to_check_hash = hashlib.sha1(json.dumps(modules_to_check).encode()).hexdigest()
+                  all_modules_hash = hashlib.sha1(json.dumps(all_modules).encode()).hexdigest()
+                  print(f"All Modules Hash for this run: {all_modules_hash}")
                   print(f"Change Hash for this run: {modules_to_check_hash}")
 
                   try:
@@ -283,6 +287,7 @@ jobs:
                               print(p, file=o)
                           print("EOF", file=o)
                           print(f"MODULES_TO_CHECK_HASH={modules_to_check_hash}", file=o)
+                          print(f"ALL_MODULES_HASH={modules_to_check_hash}", file=o)
 
             # Restore (and later save) cache
             # We cache Go Modules, Go Build Cache, and golangci-lint cache
@@ -294,8 +299,9 @@ jobs:
                       ~/.cache/go-build
                       ~/.cache/golangci-lint
                       ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-{{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
                   restore-keys: |
+                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
                       ${{ runner.os }}-go
               continue-on-error: true
@@ -307,8 +313,9 @@ jobs:
                       ~/Library/Caches/go-build
                       ~/Library/Caches/golangci-lint
                       ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-{{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
                   restore-keys: |
+                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
                       ${{ runner.os }}-go
               continue-on-error: true
@@ -320,8 +327,9 @@ jobs:
                       ~\AppData\Local\go-build
                       ~\AppData\Local\golangci-lint
                       ~\go\pkg\mod
-                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-{{ env.MODULES_TO_CHECK_HASH }}
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.MODULES_TO_CHECK_HASH }}
                   restore-keys: |
+                      ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}-${{ env.ALL_MODULES_HASH }}
                       ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
                       ${{ runner.os }}-go
               continue-on-error: true
@@ -348,6 +356,7 @@ jobs:
                   # CI
 
                   import os
+                  import platform
                   import subprocess
                   import sys
                   import textwrap
@@ -465,7 +474,7 @@ jobs:
                       print("MODULES_TO_CHECK environment variable is not set", file=sys.stderr)
                       raise Exception("MODULES_TO_CHECK env variable is unset")
 
-                  github_summary_output = ""
+                  github_summary_output = f"<h2>Summary for CI ({platform.system()})</h2>\n"
                   allSuccess = True
 
                   for module in modules_to_check:
