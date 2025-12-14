@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
 )
 
 type PackageTestResult struct {

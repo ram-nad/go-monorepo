@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/color"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/constants"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/custom_errors"
-	formattestjson "github.com/ram-nad/go-monorepo/go-ci-tool/format_testjson"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/constants"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v2/custom_errors"
+	formattestjson "github.com/ram-nad/go-monorepo/go-ci-tool/v2/format_testjson"
 	"golang.org/x/mod/semver"
 )
 
@@ -89,6 +89,7 @@ func CheckModuleTidy(details ModuleDetails) error {
 	//nolint:gosec // details.ModulePath is not a user input
 	cmd := exec.Command(GO, "-C", details.ModulePath, "mod", "tidy", "-diff")
 	cmd.Dir = details.ModulePath
+	cmd.Env = append(os.Environ(), GoWorkOff)
 
 	out := bytes.Buffer{}
 	cmd.Stdout = &out
@@ -128,6 +129,7 @@ func RunModuleTidy(details ModuleDetails) error {
 	//nolint:gosec // details.ModulePath is not a user input
 	cmd := exec.Command(GO, "-C", details.ModulePath, "mod", "tidy")
 	cmd.Dir = details.ModulePath
+	cmd.Env = append(os.Environ(), GoWorkOff)
 
 	out := bytes.Buffer{}
 	cmd.Stdout = &out

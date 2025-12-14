@@ -36,8 +36,8 @@ fi
 # Build the go-tool tool
 echo "[install] Building the go-ci-tool :)"
 
-VERSION_SUBSTITUION="main.version=0.0.0"
-GO_MIN_VERSION_SUBSTITUTION="github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGoVersion=$GO_MIN_VERSION"
-GOLANG_CI_LINT_VERSION_SUBSTITUTION="github.com/ram-nad/go-monorepo/go-ci-tool/constants.minGolangCILintVersion=$GOLANGCI_LINT_VERSION"
+VERSION_SUBSTITUION="main.version=2.0.0"
+GO_MIN_VERSION_SUBSTITUTION="github.com/ram-nad/go-monorepo/go-ci-tool/v2/constants.minGoVersion=$GO_MIN_VERSION"
+GOLANG_CI_LINT_VERSION_SUBSTITUTION="github.com/ram-nad/go-monorepo/go-ci-tool/v2/constants.minGolangCILintVersion=$GOLANGCI_LINT_VERSION"
 
 GOWORK=off go install -C go-ci-tool -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" .

@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
 	"github.com/spf13/cobra"
 )
 
@@ -20,23 +19,24 @@ const (
 	LintFlag              = "lint"
 	TidifyFlag            = "tidify"
 	IsTidyFlag            = "is-tidy"
-	VersionFlag           = "version"
+	CheckVersionFlag      = "check-version"
 	CheckLocalReplaceFlag = "check-local-replace"
-	ModFlag               = "mod"
+	ModuleFlag            = "module"
+	WorkspaceFlag         = "workspace"
 )
 
 //nolint:gocognit,cyclop // No better way to deal wit many flags
 func GetModulesCommand() *cobra.Command {
 	modulesCommand := &cobra.Command{
-		Use: "module",
+		Use: "mod",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cwd, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			modProvided := cmd.Flags().Changed(ModFlag)
-			modPath, err := cmd.Flags().GetString(ModFlag)
+			modProvided := cmd.Flags().Changed(ModuleFlag)
+			modPath, err := cmd.Flags().GetString(ModuleFlag)
 			if err != nil {
 				return err
 			}
@@ -151,7 +151,7 @@ func GetModulesCommand() *cobra.Command {
 				return RunModuleBuild(moduleDetails)
 			}
 
-			checkVersion, err := cmd.Flags().GetBool(VersionFlag)
+			checkVersion, err := cmd.Flags().GetBool(CheckVersionFlag)
 			if err != nil {
 				return err
 			}
@@ -183,7 +183,7 @@ func GetModulesCommand() *cobra.Command {
 	}
 
 	modulesCommand.Flags().
-		BoolP(VersionFlag, "v", false, "Check Go module version and compare with minimum supported version")
+		Bool(CheckVersionFlag, false, "Check module Go version and compare with minimum supported version")
 	modulesCommand.Flags().
 		Bool(CheckLocalReplaceFlag, false, "Check if module is using any replace directive with a local path")
 	modulesCommand.Flags().Bool(IsTidyFlag, false, "Check if the module is tidy")
@@ -196,13 +196,15 @@ func GetModulesCommand() *cobra.Command {
 	modulesCommand.Flags().BoolP(TestFlag, "t", false, "Run Tests for the module")
 	modulesCommand.Flags().Bool(DownloadFlag, false, "Download module dependencies")
 	modulesCommand.Flags().
-		Bool(BuildFlag, false, "Build all the packages in the module")
+		BoolP(BuildFlag, "b", false, "Build all the packages in the module")
 
 	modulesCommand.Flags().
-		StringP(ModFlag, "m", "", "Path to the module root directory for which to run the command. Default is current module root")
+		BoolP(WorkspaceFlag, "w", false, "Run the commands in workspace mode")
+	modulesCommand.Flags().
+		StringP(ModuleFlag, "m", "", "Path to the module root directory for which to run the command. Default is root of current module")
 
 	modulesCommand.MarkFlagsMutuallyExclusive(
-		VersionFlag,
+		CheckVersionFlag,
 		CheckLocalReplaceFlag,
 		IsTidyFlag,
 		TidifyFlag,
@@ -214,7 +216,7 @@ func GetModulesCommand() *cobra.Command {
 		BuildFlag,
 	)
 
-	err := modulesCommand.MarkFlagDirname(ModFlag)
+	err := modulesCommand.MarkFlagDirname(ModuleFlag)
 	if err != nil {
 		panic(err)
 	}
@@ -222,18 +224,13 @@ func GetModulesCommand() *cobra.Command {
 	return modulesCommand
 }
 
-//nolint:gocognit,cyclop // The logic to compute modules with diff is complex but it needs to be kept in single place
 func GetListModulesCommand() *cobra.Command {
 	const listModulesLongHelpDesc = `
 List Go modules prsent in current or sub-directories. Current directory is only returned if it is a module root.
-Optionally takes a file which should contain file names, then this command only returns a module if any of those files belong to that module.
-This is useful to get list of modules whose code has changed in a PR or Push.
 `
 
 	const (
-		DiffFlag            = "diff"
-		SkipNoFileErrorFlag = "skip-no-file-error"
-		JSONFlag            = "json"
+		JSONFlag = "json"
 	)
 
 	listModulesCommand := &cobra.Command{
@@ -249,92 +246,9 @@ This is useful to get list of modules whose code has changed in a PR or Push.
 				return err
 			}
 
-			diffChanged := cmd.Flags().Changed(DiffFlag)
-			diffFile, err := cmd.Flags().GetString(DiffFlag)
-			if err != nil {
-				return err
-			}
-
-			skipErrNoFile, err := cmd.Flags().GetBool(SkipNoFileErrorFlag)
-			if err != nil {
-				return err
-			}
-
 			isJSON, err := cmd.Flags().GetBool(JSONFlag)
 			if err != nil {
 				return err
-			}
-
-			var files []string = nil
-
-			if diffChanged {
-				if diffFile == "" {
-					return fmt.Errorf(
-						"invalid value empty string provided for 'diff' flag",
-					)
-				} else {
-					//nolint:gosec // It is fine to read this file
-					fileBytes, err := os.ReadFile(diffFile)
-					if err != nil {
-						if !os.IsNotExist(err) {
-							return fmt.Errorf("error while reading diff file: %s, error: %s", diffFile, err.Error())
-						} else if !skipErrNoFile {
-							return fmt.Errorf("provided diff file does not exist: %s", diffFile)
-						}
-					} else {
-						files = strings.Split(string(fileBytes), "\n")
-					}
-				}
-			}
-
-			if files != nil {
-				modulesWithDiff := make(map[string]bool)
-
-				for _, file := range files {
-					// Trim spaces from line
-					file = strings.Trim(file, " \t\r\f")
-					if file == "" {
-						continue
-					}
-
-					file = filepath.Clean(file)
-
-					// If file not a local path
-					if !filepath.IsLocal(file) {
-						// Make sure all non-local paths are absolute
-						if !filepath.IsAbs(file) {
-							file = filepath.Join(cwd, file)
-						}
-
-						if !strings.HasPrefix(file, cwd) {
-							continue
-						}
-
-						file = strings.TrimPrefix(
-							strings.TrimPrefix(file, cwd),
-							string(filepath.Separator),
-						)
-
-						// Only if path was pointing to a current directory itself
-						if file == "" {
-							file = "."
-						}
-					}
-
-					for _, module := range allModules {
-						if strings.HasPrefix(file, module) || module == "." {
-							modulesWithDiff[module] = true
-							break
-						}
-					}
-				}
-
-				allModules = make([]string, 0, len(modulesWithDiff))
-				for module, hasDiff := range modulesWithDiff {
-					if hasDiff {
-						allModules = append(allModules, module)
-					}
-				}
 			}
 
 			if isJSON {
@@ -372,17 +286,7 @@ This is useful to get list of modules whose code has changed in a PR or Push.
 		DisableFlagsInUseLine: true,
 	}
 
-	listModulesCommand.Flags().
-		StringP(DiffFlag, "d", "", "File containing diff for which we fetch list of modules")
-	listModulesCommand.Flags().
-		Bool(SkipNoFileErrorFlag, false, "Don't error if diff file does not exist. List all modules in that case")
-
 	listModulesCommand.Flags().Bool(JSONFlag, false, "Output in JSON array format")
-
-	err := listModulesCommand.MarkFlagFilename(DiffFlag)
-	if err != nil {
-		panic(err)
-	}
 
 	return listModulesCommand
 }

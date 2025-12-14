@@ -20,7 +20,7 @@ The CI step is optimised to execute fast and use minimal compute. To that effect
 
 ### Using the setup in your own GitHub repository
 
-1. Use the `.github/workflows/go-ci.yml` workflow in your repository (Check [ci.yaml](.github/workflows/ci.yml)for example)
+1. Use the `.github/workflows/go-ci.yml` workflow in your repository (Check [ci.yaml](.github/workflows/ci.yml) for example)
 
 ### Using the setup locally
 

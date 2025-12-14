@@ -1,4 +1,4 @@
-module github.com/ram-nad/go-monorepo/go-ci-tool
+module github.com/ram-nad/go-monorepo/go-ci-tool/v2
 
 go 1.25.5
 
