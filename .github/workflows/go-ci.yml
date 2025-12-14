@@ -208,7 +208,7 @@ jobs:
 
                   git fetch --no-tags --prune --depth=1 origin ${{ github.event.before }}
                   echo "GIT_DIFF_FILES<<EOF" >> "$GITHUB_ENV"
-                  GIT_DIFF_FILES=$(git --no-pager diff --no-color --name-only --output=diff.txt ${{ github.event.before }}..)
+                  GIT_DIFF_FILES=$(git --no-pager diff --no-color --name-only ${{ github.event.before }}..)
                   echo "$GIT_DIFF_FILES" >> "$GITHUB_ENV"
                   echo "EOF" >> "$GITHUB_ENV"
 
