@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ const (
 	WorkspaceFlag         = "workspace"
 )
 
-//nolint:gocognit,cyclop // No better way to deal wit many flags
+//nolint:gocognit,cyclop,maintidx // No better way to deal with many flags
 func GetModulesCommand() *cobra.Command {
 	modulesCommand := &cobra.Command{
 		Use: "mod",
@@ -86,42 +86,53 @@ func GetModulesCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			combined, err := cmd.Flags().GetBool(CombinedFlag)
-			if err != nil {
-				return err
-			}
-
-			if integration || combined {
+			if integration {
+				test, err := cmd.Flags().GetBool(TestFlag)
+				if err != nil {
+					return err
+				}
+				vet, err := cmd.Flags().GetBool(VetFlag)
+				if err != nil {
+					return err
+				}
 				viewCoverage, err := cmd.Flags().GetBool(ViewCoverageFlag)
 				if err != nil {
 					return err
 				}
-				if integration {
-					test, err := cmd.Flags().GetBool(TestFlag)
-					if err != nil {
-						return err
-					}
-					vet, err := cmd.Flags().GetBool(VetFlag)
-					if err != nil {
-						return err
-					}
-					if !test && !vet && !viewCoverage {
-						return fmt.Errorf(
-							"--%s is only valid with --%s, --%s, or --%s",
-							IntegrationFlag,
-							TestFlag,
-							VetFlag,
-							ViewCoverageFlag,
-						)
-					}
+				if !test && !vet && !viewCoverage {
+					return fmt.Errorf(
+						"--%s is only valid with --%s, --%s, or --%s",
+						IntegrationFlag,
+						TestFlag,
+						VetFlag,
+						ViewCoverageFlag,
+					)
 				}
-				if combined && !viewCoverage {
+			}
+
+			combined, err := cmd.Flags().GetBool(CombinedFlag)
+			if err != nil {
+				return err
+			}
+			if combined {
+				viewCoverage, err := cmd.Flags().GetBool(ViewCoverageFlag)
+				if err != nil {
+					return err
+				}
+
+				if !viewCoverage {
 					return fmt.Errorf(
 						"--%s is only valid with --%s",
 						CombinedFlag,
 						ViewCoverageFlag,
 					)
 				}
+
+				return fmt.Errorf(
+					"--%s is only valid with --%s",
+					CombinedFlag,
+					ViewCoverageFlag,
+				)
 			}
 
 			checkLocalReplace, err := cmd.Flags().GetBool(CheckLocalReplaceFlag)
@@ -276,8 +287,6 @@ func GetModulesCommand() *cobra.Command {
 	modulesCommand.Flags().
 		BoolP(BuildFlag, "b", false, "Build all the packages in the module")
 
-	modulesCommand.Flags().
-		BoolP(WorkspaceFlag, "w", false, "Run the commands in workspace mode")
 	modulesCommand.Flags().
 		StringP(ModuleFlag, "m", "", "Path to the module root directory for which to run the command. Default is root of current module")
 

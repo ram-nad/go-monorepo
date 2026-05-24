@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	cienv "github.com/ram-nad/go-monorepo/go-ci-tool/v3/ci_env"
+	cienv "github.com/ram-nad/go-monorepo/go-ci-tool/v4/ci_env"
 )
 
 //nolint:gochecknoglobals // Variable exported to used

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"os"
 
-	checktools "github.com/ram-nad/go-monorepo/go-ci-tool/v3/check_tools"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v3/custom_errors"
-	listcaches "github.com/ram-nad/go-monorepo/go-ci-tool/v3/list_caches"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/modules"
+	checktools "github.com/ram-nad/go-monorepo/go-ci-tool/v4/check_tools"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v4/custom_errors"
+	listcaches "github.com/ram-nad/go-monorepo/go-ci-tool/v4/list_caches"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/modules"
 	"github.com/spf13/cobra"
 )
 

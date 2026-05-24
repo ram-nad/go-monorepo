@@ -13,14 +13,15 @@ We validate following things in CI for all the modules:
 1. `go.mod` is valid and tidy
 2. `go.mod` doesn't contain any replaces with local modules. This is sometimes required during testing, but should be reverted before submitting the changes.
 3. Module uses Go Version lower than minimum supported Go version.
-4. Code is formatted and correctly and follows the best practices, we use `GolangCI Lint` for this.
-5. We are able to download dependencies and build the modules.
+5. `go vet` doesn't report any issues.
+6. Code is formatted and correctly and follows the best practices, we use `GolangCI Lint` for this.
+7. We are able to download dependencies and build the modules.
 
 The CI step is optimised to execute fast and use minimal compute. To that effect, it caches all the downloaded Go modules, build directories (for faster builds) and even GolangCI-Lint cache for faster linting. Morever, it only runs the above validations for modules that are modified in a PR/commit.
 
 ### Using the setup in your own GitHub repository
 
-1. Use the `.github/workflows/go-ci.yml` workflow in your repository (Check [ci.yaml](.github/workflows/ci.yml) for example)
+Use the `.github/workflows/go-ci.yml` workflow in your repository (Check [ci.yaml](.github/workflows/ci.yml) for example)
 
 ### Using the setup locally
 

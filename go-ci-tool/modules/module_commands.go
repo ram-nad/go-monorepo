@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/constants"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v3/custom_errors"
-	formattestjson "github.com/ram-nad/go-monorepo/go-ci-tool/v3/format_testjson"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/constants"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v4/custom_errors"
+	formattestjson "github.com/ram-nad/go-monorepo/go-ci-tool/v4/format_testjson"
 	"golang.org/x/mod/semver"
 )
 
@@ -24,6 +24,8 @@ const (
 	GolangCILint   = "golangci-lint"
 	GO             = "go"
 	GoWorkOff      = "GOWORK=off"
+
+	DirFileMode = 0o755
 )
 
 func runCmd(cmd *exec.Cmd) (stdout, stderr *bytes.Buffer, runErr error) {
@@ -285,7 +287,6 @@ func RunVet(details ModuleDetails, integration bool) error {
 	}
 	args = append(args, AllModulesPath)
 
-	//nolint:gosec // args are internally constructed
 	cmd := exec.Command(GO, args...)
 	cmd.Dir = details.ModulePath
 	cmd.Env = append(os.Environ(), GoWorkOff)
@@ -326,7 +327,7 @@ func RunTests(
 			err.Error(),
 		)
 	}
-	if err := os.MkdirAll(coverdataDirAbs, fs.FileMode(0o755)); err != nil {
+	if err := os.MkdirAll(coverdataDirAbs, fs.FileMode(DirFileMode)); err != nil {
 		return fmt.Errorf(
 			"error while creating coverage data directory: %s",
 			err.Error(),
@@ -353,7 +354,6 @@ func RunTests(
 	}
 	testArgs = append(testArgs, AllModulesPath)
 
-	//nolint:gosec // testArgs are internally constructed
 	cmd := exec.Command(GO, testArgs...)
 	cmd.Dir = details.ModulePath
 	cmd.Env = append(os.Environ(), GoWorkOff, "GOCOVERDIR="+coverdataDirAbs)
@@ -494,7 +494,7 @@ func CombineCoverage(details ModuleDetails) error {
 				details.Module,
 			)
 		}
-		if err := os.MkdirAll(dir, fs.FileMode(0o755)); err != nil {
+		if err := os.MkdirAll(dir, fs.FileMode(DirFileMode)); err != nil {
 			return fmt.Errorf(
 				"error while creating coverage data directory %s: %s",
 				dir,
@@ -509,7 +509,7 @@ func CombineCoverage(details ModuleDetails) error {
 			err.Error(),
 		)
 	}
-	if err := os.MkdirAll(coverdataCombinedDir, fs.FileMode(0o755)); err != nil {
+	if err := os.MkdirAll(coverdataCombinedDir, fs.FileMode(DirFileMode)); err != nil {
 		return fmt.Errorf(
 			"error while creating combined coverage data directory: %s",
 			err.Error(),
