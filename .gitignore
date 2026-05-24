@@ -9,10 +9,13 @@
 .env
 
 # Coverage Output
-coverage.out
+coverage*.out
+
+# Coverage Data
+.coverdata*/
 
 # Tests Output
-test.out.json
+test*.out.json
 
 # Editor files
 /.vscode

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +14,7 @@ const (
 	BuildFlag             = "build"
 	DownloadFlag          = "download"
 	TestFlag              = "test"
+	VetFlag               = "vet"
 	FmtFlag               = "fmt"
 	FixFlag               = "fix"
 	LintFlag              = "lint"
@@ -21,6 +22,10 @@ const (
 	IsTidyFlag            = "is-tidy"
 	CheckVersionFlag      = "check-version"
 	CheckLocalReplaceFlag = "check-local-replace"
+	CombineCoverageFlag   = "combine-coverage"
+	ViewCoverageFlag      = "view-coverage"
+	IntegrationFlag       = "integration"
+	CombinedFlag          = "combined"
 	ModuleFlag            = "module"
 	WorkspaceFlag         = "workspace"
 )
@@ -64,7 +69,10 @@ func GetModulesCommand() *cobra.Command {
 			} else {
 				relModulePath, err = FindModuleRoot(cwd)
 				if err != nil {
-					return fmt.Errorf("unable to find current module root: %s", err.Error())
+					return fmt.Errorf(
+						"unable to find current module root: %s",
+						err.Error(),
+					)
 				}
 				absModulePath = filepath.Join(cwd, relModulePath)
 			}
@@ -72,6 +80,48 @@ func GetModulesCommand() *cobra.Command {
 			moduleDetails, err := GetDetailsForModFile(absModulePath)
 			if err != nil {
 				return err
+			}
+
+			integration, err := cmd.Flags().GetBool(IntegrationFlag)
+			if err != nil {
+				return err
+			}
+			combined, err := cmd.Flags().GetBool(CombinedFlag)
+			if err != nil {
+				return err
+			}
+
+			if integration || combined {
+				viewCoverage, err := cmd.Flags().GetBool(ViewCoverageFlag)
+				if err != nil {
+					return err
+				}
+				if integration {
+					test, err := cmd.Flags().GetBool(TestFlag)
+					if err != nil {
+						return err
+					}
+					vet, err := cmd.Flags().GetBool(VetFlag)
+					if err != nil {
+						return err
+					}
+					if !test && !vet && !viewCoverage {
+						return fmt.Errorf(
+							"--%s is only valid with --%s, --%s, or --%s",
+							IntegrationFlag,
+							TestFlag,
+							VetFlag,
+							ViewCoverageFlag,
+						)
+					}
+				}
+				if combined && !viewCoverage {
+					return fmt.Errorf(
+						"--%s is only valid with --%s",
+						CombinedFlag,
+						ViewCoverageFlag,
+					)
+				}
 			}
 
 			checkLocalReplace, err := cmd.Flags().GetBool(CheckLocalReplaceFlag)
@@ -106,6 +156,14 @@ func GetModulesCommand() *cobra.Command {
 				return RunGolangCILint(moduleDetails, relModulePath)
 			}
 
+			vet, err := cmd.Flags().GetBool(VetFlag)
+			if err != nil {
+				return err
+			}
+			if vet {
+				return RunVet(moduleDetails, integration)
+			}
+
 			fmt, err := cmd.Flags().GetBool(FmtFlag)
 			if err != nil {
 				return err
@@ -127,12 +185,23 @@ func GetModulesCommand() *cobra.Command {
 				return err
 			}
 			if test {
-				return RunTests(
-					moduleDetails,
-					"test.out.json",
-					"coverage.out",
-					relModulePath,
-				)
+				return RunTests(moduleDetails, relModulePath, integration)
+			}
+
+			combineCoverage, err := cmd.Flags().GetBool(CombineCoverageFlag)
+			if err != nil {
+				return err
+			}
+			if combineCoverage {
+				return CombineCoverage(moduleDetails)
+			}
+
+			viewCoverage, err := cmd.Flags().GetBool(ViewCoverageFlag)
+			if err != nil {
+				return err
+			}
+			if viewCoverage {
+				return ViewCoverage(moduleDetails, integration, combined)
 			}
 
 			download, err := cmd.Flags().GetBool(DownloadFlag)
@@ -194,6 +263,15 @@ func GetModulesCommand() *cobra.Command {
 	modulesCommand.Flags().
 		Bool(FixFlag, false, "Fix auto-fixable lint issues in the module")
 	modulesCommand.Flags().BoolP(TestFlag, "t", false, "Run Tests for the module")
+	modulesCommand.Flags().Bool(VetFlag, false, "Run 'go vet' for the module")
+	modulesCommand.Flags().
+		Bool(CombineCoverageFlag, false, "Combine normal and integration coverage profiles for the module")
+	modulesCommand.Flags().
+		Bool(ViewCoverageFlag, false, "Open HTML coverage report for the module in browser")
+	modulesCommand.Flags().
+		Bool(IntegrationFlag, false, "Run --test or --vet in integration mode (passes -tags=integration); with --view-coverage, opens integration coverage")
+	modulesCommand.Flags().
+		Bool(CombinedFlag, false, "With --view-coverage, opens the combined (normal + integration) coverage report")
 	modulesCommand.Flags().Bool(DownloadFlag, false, "Download module dependencies")
 	modulesCommand.Flags().
 		BoolP(BuildFlag, "b", false, "Build all the packages in the module")
@@ -212,9 +290,14 @@ func GetModulesCommand() *cobra.Command {
 		FmtFlag,
 		FixFlag,
 		TestFlag,
+		VetFlag,
+		CombineCoverageFlag,
+		ViewCoverageFlag,
 		DownloadFlag,
 		BuildFlag,
 	)
+
+	modulesCommand.MarkFlagsMutuallyExclusive(IntegrationFlag, CombinedFlag)
 
 	err := modulesCommand.MarkFlagDirname(ModuleFlag)
 	if err != nil {

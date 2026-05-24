@@ -7,9 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/constants"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v2/custom_errors"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/constants"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v3/custom_errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 )
@@ -30,7 +30,12 @@ func checkIfInstalled(tool string) bool {
 		)
 		return false
 	} else {
-		color.Printf(color.InfoColor, "Required Tool %s is installed at %s\n", tool, str)
+		color.Printf(
+			color.InfoColor,
+			"Required Tool %s is installed at %s\n",
+			tool,
+			str,
+		)
 		return true
 	}
 }

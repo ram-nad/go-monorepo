@@ -4,11 +4,11 @@ import (
 	"errors"
 	"os"
 
-	checktools "github.com/ram-nad/go-monorepo/go-ci-tool/v2/check_tools"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/color"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v2/custom_errors"
-	listcaches "github.com/ram-nad/go-monorepo/go-ci-tool/v2/list_caches"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v2/modules"
+	checktools "github.com/ram-nad/go-monorepo/go-ci-tool/v3/check_tools"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/color"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v3/custom_errors"
+	listcaches "github.com/ram-nad/go-monorepo/go-ci-tool/v3/list_caches"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v3/modules"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,9 @@ var version = ""
 
 func main() {
 	// Explicitly enable color output for CI that supports it
-	if color.ShouldForceColorOutputForCI() {
+	if color.IsNoColorEnabled() {
+		color.DisableColorForAll()
+	} else if color.ShouldForceColorOutputForCI() {
 		color.EnableColorForAll()
 	}
 

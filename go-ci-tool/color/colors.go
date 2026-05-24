@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	cienv "github.com/ram-nad/go-monorepo/go-ci-tool/v2/ci_env"
+	cienv "github.com/ram-nad/go-monorepo/go-ci-tool/v3/ci_env"
 )
 
 //nolint:gochecknoglobals // Variable exported to used
@@ -30,17 +30,17 @@ var (
 	NoColor = color.New(color.Reset)
 )
 
-func Println(color *color.Color, a ...interface{}) {
+func Println(color *color.Color, a ...any) {
 	//nolint:errcheck,gosec // Ignoring write errors to stdout
 	color.Println(a...)
 }
 
-func Printf(c *color.Color, format string, a ...interface{}) {
+func Printf(c *color.Color, format string, a ...any) {
 	//nolint:errcheck,gosec // Ignoring write errors to stdout
 	c.Printf(format, a...)
 }
 
-func Print(c *color.Color, a ...interface{}) {
+func Print(c *color.Color, a ...any) {
 	//nolint:errcheck,gosec // Ignoring write errors to stdout
 	c.Print(a...)
 }
@@ -91,4 +91,14 @@ func DisableColorForAll() {
 
 func ShouldForceColorOutputForCI() bool {
 	return cienv.IsCIEnvAndSupportsColor() && !IsNoColorEnabled()
+}
+
+func ShouldOutputColor() bool {
+	if IsNoColorEnabled() {
+		return false
+	}
+	if cienv.IsCIEnvAndSupportsColor() {
+		return true
+	}
+	return !color.NoColor
 }

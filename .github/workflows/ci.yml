@@ -1,51 +1,51 @@
 name: CI
 
 on:
-    workflow_dispatch:
-        inputs:
-            os:
-                description: "OS"
-                required: true
-                default: All
-                type: choice
-                options:
-                    - All
-                    - Linux
-                    - macOS
-                    - Windows
-    pull_request:
-        branches: ["*"]
-        types: ["opened", "synchronize", "reopened"]
-    push:
-        branches: ["master"]
-        tags: ["v[0-9]+.[0-9]+.[0-9]+", "**/v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+    inputs:
+      os:
+        description: "OS"
+        required: true
+        default: All
+        type: choice
+        options:
+          - All
+          - Linux
+          - macOS
+          - Windows
+  pull_request:
+    branches: ["*"]
+    types: ["opened", "synchronize", "reopened"]
+  push:
+    branches: ["master"]
+    tags: ["v[0-9]+.[0-9]+.[0-9]+", "**/v[0-9]+.[0-9]+.[0-9]+"]
 
 permissions:
-    contents: read
+  contents: read
 
 run-name: ${{ (github.event_name == 'workflow_dispatch' && format('Manual Run for {0} {1} {2}', github.event.inputs.os, github.ref_name, github.sha)) || (github.event_name == 'pull_request' && format('PR {0} {1}', github.event.number, github.sha)) || (github.event_name == 'push' && format('Push {0} {1}', github.ref, github.sha)) }}
 
 jobs:
-    ci-linux:
-        uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
-        if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Linux') || (inputs.os == 'All') }}
-        with:
-            os: "Linux"
-            min_go_version: "1.25.5"
-            golangci_lint_version: "2.7.0"
+  ci-linux:
+    uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
+    if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Linux') || (inputs.os == 'All') }}
+    with:
+      os: "Linux"
+      min_go_version: "1.25.5"
+      golangci_lint_version: "2.12.2"
 
-    ci-windows:
-        uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
-        if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Windows') || (inputs.os == 'All') }}
-        with:
-            os: "Windows"
-            min_go_version: "1.25.5"
-            golangci_lint_version: "2.7.0"
+  ci-windows:
+    uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
+    if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Windows') || (inputs.os == 'All') }}
+    with:
+      os: "Windows"
+      min_go_version: "1.25.5"
+      golangci_lint_version: "2.12.2"
 
-    ci-macos:
-        uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
-        if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'macOS') || (inputs.os == 'All') }}
-        with:
-            os: "macOS"
-            min_go_version: "1.25.5"
-            golangci_lint_version: "2.7.0"
+  ci-macos:
+    uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
+    if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'macOS') || (inputs.os == 'All') }}
+    with:
+      os: "macOS"
+      min_go_version: "1.25.5"
+      golangci_lint_version: "2.12.2"
