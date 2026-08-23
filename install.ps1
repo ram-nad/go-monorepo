@@ -1,5 +1,5 @@
-$GOLANGCI_LINT_VERSION = "2.12.2"
-$GO_MIN_VERSION = "1.25.5"
+$GOLANGCI_LINT_VERSION = "2.13.1"
+$GO_MIN_VERSION = "1.26.5"
 
 # Check if Go is installed
 if (Get-Command go -ErrorAction SilentlyContinue) {

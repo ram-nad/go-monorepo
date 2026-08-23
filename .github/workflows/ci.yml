@@ -31,21 +31,21 @@ jobs:
     if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Linux') || (inputs.os == 'All') }}
     with:
       os: "Linux"
-      min_go_version: "1.25.5"
-      golangci_lint_version: "2.12.2"
+      min_go_version: "1.26.5"
+      golangci_lint_version: "2.13.1"
 
   ci-windows:
     uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
     if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'Windows') || (inputs.os == 'All') }}
     with:
       os: "Windows"
-      min_go_version: "1.25.5"
-      golangci_lint_version: "2.12.2"
+      min_go_version: "1.26.5"
+      golangci_lint_version: "2.13.1"
 
   ci-macos:
     uses: ram-nad/go-monorepo/.github/workflows/go-ci.yml@master
     if: ${{ (github.event_name != 'workflow_dispatch') || (inputs.os == 'macOS') || (inputs.os == 'All') }}
     with:
       os: "macOS"
-      min_go_version: "1.25.5"
-      golangci_lint_version: "2.12.2"
+      min_go_version: "1.26.5"
+      golangci_lint_version: "2.13.1"
