@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v5/color"
 	"github.com/spf13/cobra"
 )
 

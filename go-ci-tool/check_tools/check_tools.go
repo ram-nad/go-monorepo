@@ -7,9 +7,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/constants"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v4/custom_errors"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v5/color"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v5/constants"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v5/custom_errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/semver"
 )

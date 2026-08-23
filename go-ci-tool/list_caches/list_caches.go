@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ram-nad/go-monorepo/go-ci-tool/v4/color"
-	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v4/custom_errors"
+	"github.com/ram-nad/go-monorepo/go-ci-tool/v5/color"
+	customerrors "github.com/ram-nad/go-monorepo/go-ci-tool/v5/custom_errors"
 	"github.com/spf13/cobra"
 )
 
