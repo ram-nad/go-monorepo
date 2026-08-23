@@ -342,13 +342,13 @@ jobs:
       # Install go-ci-tool using `go install`
       - name: Install go-ci-tool
         env:
-          VERSION_SUBSTITUION: "main.version=4.0.0"
-          GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/v4/constants.minGoVersion=${{ inputs.min_go_version }}"
-          GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/v4/constants.minGolangCILintVersion=${{ inputs.golangci_lint_version }}"
+          VERSION_SUBSTITUION: "main.version=5.0.0"
+          GO_MIN_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/v5/constants.minGoVersion=${{ inputs.min_go_version }}"
+          GOLANG_CI_LINT_VERSION_SUBSTITUTION: "github.com/ram-nad/go-monorepo/go-ci-tool/v5/constants.minGolangCILintVersion=${{ inputs.golangci_lint_version }}"
         shell: bash
         run: |
           # `go install` go-ci-tool
-          go install -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" github.com/ram-nad/go-monorepo/go-ci-tool/v4@v4.0.0
+          go install -trimpath -buildvcs=false -ldflags="-w -X $VERSION_SUBSTITUION -X $GO_MIN_VERSION_SUBSTITUTION -X $GOLANG_CI_LINT_VERSION_SUBSTITUTION" github.com/ram-nad/go-monorepo/go-ci-tool/v5@v5.0.0
 
       # Validate the setup
       - name: Check Tools
@@ -418,7 +418,8 @@ jobs:
 
               try:
                   r = subprocess.run(
-                      ["go", "tool", "cover", "-func", f"{module}/coverage.combined.out"],
+                      ["go", "tool", "cover", "-func", "coverage.combined.out"],
+                      cwd=module,
                       capture_output=True,
                       text=True,
                       check=False,

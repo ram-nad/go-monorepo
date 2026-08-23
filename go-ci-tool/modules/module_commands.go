@@ -353,10 +353,11 @@ func RunTests(
 		testArgs = append(testArgs, "-tags=integration")
 	}
 	testArgs = append(testArgs, AllModulesPath)
+	testArgs = append(testArgs, "-args", "-test.gocoverdir="+coverdataDirAbs)
 
 	cmd := exec.Command(GO, testArgs...)
 	cmd.Dir = details.ModulePath
-	cmd.Env = append(os.Environ(), GoWorkOff, "GOCOVERDIR="+coverdataDirAbs)
+	cmd.Env = append(os.Environ(), GoWorkOff)
 	cmd.Stdin = nil
 
 	testOut := formattestjson.NewTestOutState()

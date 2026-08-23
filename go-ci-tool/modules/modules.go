@@ -127,12 +127,6 @@ func GetModulesCommand() *cobra.Command {
 						ViewCoverageFlag,
 					)
 				}
-
-				return fmt.Errorf(
-					"--%s is only valid with --%s",
-					CombinedFlag,
-					ViewCoverageFlag,
-				)
 			}
 
 			checkLocalReplace, err := cmd.Flags().GetBool(CheckLocalReplaceFlag)
